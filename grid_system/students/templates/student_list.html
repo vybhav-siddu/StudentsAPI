@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student List</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('#filter-form');
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the form from submitting and reloading the page
+
+                // Retrieve the values entered by the user
+                const nameFilter = document.querySelector('#name_filter').value;
+                const marksFilter = document.querySelector('#marks_filter').value;
+
+                // Construct the AJAX request payload
+                const data = {
+                    name_filter: nameFilter,
+                    marks_filter: marksFilter,
+                };
+
+                // Make the AJAX request to the backend API endpoint
+                fetch('/api/server-side-filtering/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update the displayed data on the UI based on the response
+
+                    // Get the container element where the student details will be displayed
+                    const studentContainer = document.querySelector('#student-container');
+
+                    // Clear the existing student details in the container
+                    studentContainer.innerHTML = '';
+
+                    // Iterate over the student data in the response and create HTML elements to display the details
+                    data.students.forEach(student => {
+                        // Create a new <div> element for each student
+                        const studentDiv = document.createElement('div');
+                        studentDiv.classList.add('student');
+
+                        // Create <span> elements for each student detail
+                        const idSpan = document.createElement('span');
+                        idSpan.textContent = 'ID: ' + student.id;
+
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = 'Name: ' + student.name;
+
+                        const marksSpan = document.createElement('span');
+                        marksSpan.textContent = 'Total Marks: ' + student.total_marks;
+
+                        // Append the <span> elements to the student <div>
+                        studentDiv.appendChild(idSpan);
+                        studentDiv.appendChild(nameSpan);
+                        studentDiv.appendChild(marksSpan);
+
+                        // Append the student <div> to the container
+                        studentContainer.appendChild(studentDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Welcome, {{ user.username }}</h1>
+
+    <form method="GET" action="{% url 'filter_students' %}" id="filter-form">
+        <label for="name_filter">Filter by Name:</label>
+        <input type="text" id="name_filter" name="name_filter">
+
+        <label for="marks_filter">Filter by Total Marks:</label>
+        <input type="text" id="marks_filter" name="marks_filter">
+
+        <button type="submit">Apply Filters</button>
+    </form>
+
+    <div id="student-container">
+        {% if students %}
+        {% for student in students %}
+        <div class="student-card">
+            <span>ID: {{ student.id }}</span>
+            <span>Name: {{ student.name }}</span>
+            <span>Total Marks: {{ student.total_marks }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No students found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
